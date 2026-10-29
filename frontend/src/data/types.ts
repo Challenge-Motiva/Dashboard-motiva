@@ -64,4 +64,7 @@ export interface Equipe {
   equipe_id: string;
   nome: string;
   base: string;
+  turno: "diurno" | "noturno";
+  especialidade: string;
+  tecnicos: string[];
 }

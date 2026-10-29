@@ -79,12 +79,15 @@ export interface Plano {
 /**
  * Atende as escadas com alerta confirmado em ordem de criticidade, enquanto
  * couber no turno (incluindo a volta à base). O que não couber fica adiado.
+ * `origem` permite emendar uma ordem na anterior: a equipe sai da última
+ * estação atendida em vez de voltar à base no meio do turno.
  */
 export function planejarTurno(
   base: string,
   horas: number,
   confirmados: Alerta[],
   escadas: Record<string, EscadaRolante>,
+  origem: string = base,
 ): Plano {
   const porEscada = new Map<string, Alerta[]>();
   for (const a of confirmados) porEscada.set(a.escada_id, [...(porEscada.get(a.escada_id) ?? []), a]);
@@ -96,7 +99,7 @@ export function planejarTurno(
   const paradas: Parada[] = [];
   const adiadas: Plano["adiadas"] = [];
   let t = 0;
-  let atual = base;
+  let atual = origem;
   for (const item of fila) {
     const ida = rota(atual, item.escada.estacao);
     const volta = rota(item.escada.estacao, base);
@@ -113,4 +116,12 @@ export function planejarTurno(
   }
   const retorno = rota(atual, base);
   return { paradas, adiadas, retorno, totalMin: t + retorno.minutos };
+}
+
+export const INICIO_TURNO_MIN = 22 * 60; // turno noturno, fora do horário de pico
+
+/** Minutos desde o início do turno → "HH:MM". */
+export function horaTurno(min: number): string {
+  const t = (INICIO_TURNO_MIN + min) % (24 * 60);
+  return `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
 }

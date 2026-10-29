@@ -49,31 +49,56 @@ const ACESSOS = ["Rua - mezanino", "Mezanino - plataforma", "Plataforma - mezani
 const FABRICANTES = ["Fabricante A", "Fabricante B", "Fabricante C"];
 
 export const EQUIPES: Equipe[] = [
-  { equipe_id: "EQ-01", nome: "Equipe 1 (turno diurno)", base: "BASE" },
-  { equipe_id: "EQ-02", nome: "Equipe 2 (turno diurno)", base: "BASE" },
+  { equipe_id: "EQ-01", nome: "Equipe 1", base: "BASE", turno: "diurno", especialidade: "Mecânica geral", tecnicos: ["Carla Souza", "Diego Martins", "Paulo Reis"] },
+  { equipe_id: "EQ-02", nome: "Equipe 2", base: "BASE", turno: "diurno", especialidade: "Elétrica e comandos", tecnicos: ["Juliana Prado", "Marcos Lima"] },
+  { equipe_id: "EQ-03", nome: "Equipe 3", base: "BASE", turno: "noturno", especialidade: "Mecânica pesada (motor e redutor)", tecnicos: ["André Nunes", "Beatriz Rocha", "Felipe Costa"] },
+  { equipe_id: "EQ-04", nome: "Equipe 4", base: "BASE", turno: "noturno", especialidade: "Elétrica e lubrificação", tecnicos: ["Larissa Gomes", "Thiago Alves"] },
 ];
+
+interface Desvio {
+  sinal: Sinal;
+  inicioH: number;
+  alvo: number;
+  /** degrau: mudança brusca (ex.: rolamento), em vez de rampa gradual. */
+  degrau?: boolean;
+}
 
 /** Cenários plantados para o protótipo mostrar todos os estados. */
 interface Cenario {
   grupo: Grupo;
-  sinal?: Sinal;
-  inicioH?: number;
-  alvo?: number;
+  desvios?: Desvio[];
   offlineMin?: number;
-  /** degrau: mudança brusca (ex.: rolamento), em vez de rampa gradual. */
-  degrau?: boolean;
 }
 const CENARIOS: Record<string, Cenario> = {
-  "ECR-PAU-03": { grupo: "Critica A", sinal: "vibracao", inicioH: 74, alvo: 3.9, degrau: true },
-  "ECR-REP-02": { grupo: "Critica B", sinal: "temperatura", inicioH: 30, alvo: 86 },
-  "ECR-OSF-02": { grupo: "Critica B", sinal: "tensao", inicioH: 20, alvo: 336 },
-  "ECR-FAL-01": { grupo: "Nao critica A", sinal: "nivel_oleo", inicioH: 130, alvo: 22 },
-  "ECR-PIN-03": { grupo: "Critica A", sinal: "corrente", inicioH: 48, alvo: 23.2 },
-  "ECR-FRA-01": { grupo: "Critica A", sinal: "temperatura", inicioH: 40, alvo: 74 },
-  "ECR-LUZ-04": { grupo: "Nao critica A", sinal: "velocidade", inicioH: 36, alvo: 0.474 },
-  "ECR-HIG-01": { grupo: "Nao critica B", sinal: "vibracao", inicioH: 60, alvo: 3.4 },
+  // Vermelho
+  "ECR-PAU-03": { grupo: "Critica A", desvios: [{ sinal: "vibracao", inicioH: 74, alvo: 4.6, degrau: true }] },
+  "ECR-REP-02": { grupo: "Critica B", desvios: [{ sinal: "temperatura", inicioH: 30, alvo: 86 }] },
+  "ECR-OSF-02": { grupo: "Critica B", desvios: [{ sinal: "tensao", inicioH: 20, alvo: 336 }] },
+  "ECR-FAL-01": { grupo: "Nao critica A", desvios: [{ sinal: "nivel_oleo", inicioH: 130, alvo: 22 }] },
+  "ECR-LUZ-01": { grupo: "Critica A", desvios: [{ sinal: "corrente", inicioH: 14, alvo: 27, degrau: true }] },
+  "ECR-SPM-02": { grupo: "Critica B", desvios: [{ sinal: "vibracao", inicioH: 90, alvo: 4.8 }] },
+  "ECR-REP-04": { grupo: "Nao critica A", desvios: [{ sinal: "temperatura", inicioH: 26, alvo: 90 }] },
+  // Vários sinais ao mesmo tempo (motor sobrecarregado: aquece e puxa mais corrente)
+  "ECR-VSO-01": {
+    grupo: "Critica A",
+    desvios: [
+      { sinal: "temperatura", inicioH: 52, alvo: 78 },
+      { sinal: "corrente", inicioH: 52, alvo: 23.4 },
+    ],
+  },
+  // Amarelo
+  "ECR-PIN-03": { grupo: "Critica A", desvios: [{ sinal: "corrente", inicioH: 48, alvo: 23.2 }] },
+  "ECR-FRA-01": { grupo: "Critica A", desvios: [{ sinal: "temperatura", inicioH: 40, alvo: 70 }] },
+  "ECR-LUZ-04": { grupo: "Nao critica A", desvios: [{ sinal: "velocidade", inicioH: 36, alvo: 0.474 }] },
+  "ECR-HIG-01": { grupo: "Nao critica B", desvios: [{ sinal: "vibracao", inicioH: 60, alvo: 3.4 }] },
+  "ECR-PAU-01": { grupo: "Critica A", desvios: [{ sinal: "nivel_oleo", inicioH: 160, alvo: 34 }] },
+  "ECR-FAL-03": { grupo: "Critica A", desvios: [{ sinal: "tensao", inicioH: 18, alvo: 354 }] },
+  "ECR-HIG-03": { grupo: "Critica B", desvios: [{ sinal: "velocidade", inicioH: 44, alvo: 0.535 }] },
+  "ECR-PIN-02": { grupo: "Nao critica A", desvios: [{ sinal: "vibracao", inicioH: 28, alvo: 3.2 }] },
+  // Cinza (sem leitura)
   "ECR-BUT-02": { grupo: "Critica B", offlineMin: 160 },
   "ECR-VSO-03": { grupo: "Nao critica A", offlineMin: 410 },
+  "ECR-OSF-03": { grupo: "Nao critica B", offlineMin: 85 },
 };
 
 /** Intensidade de uso 0–1: picos às 8h e às 18h, quase zero de madrugada. */
@@ -111,7 +136,8 @@ function gerarLeituras(id: string, c?: Cenario): Leitura[] {
       nivel_oleo_pct: base.nivel_oleo_pct - (HORAS - h) * 0.02 + 0.4 * gauss(),
       velocidade_m_s: base.velocidade_m_s - 0.004 * u + 0.002 * gauss(),
     };
-    if (c?.sinal && c.alvo !== undefined && c.inicioH !== undefined && h < c.inicioH) {
+    for (const d of c?.desvios ?? []) {
+      if (h >= d.inicioH) continue;
       const campo = {
         vibracao: "vibracao_mm_s",
         temperatura: "temperatura_c",
@@ -119,9 +145,9 @@ function gerarLeituras(id: string, c?: Cenario): Leitura[] {
         tensao: "tensao_v",
         nivel_oleo: "nivel_oleo_pct",
         velocidade: "velocidade_m_s",
-      }[c.sinal] as keyof typeof base;
-      const p = c.degrau ? 0.75 + 0.25 * (1 - h / c.inicioH) : Math.pow(1 - h / c.inicioH, 1.3);
-      l[campo] += (c.alvo - base[campo]) * p;
+      }[d.sinal] as keyof typeof base;
+      const p = d.degrau ? 0.75 + 0.25 * (1 - h / d.inicioH) : Math.pow(1 - h / d.inicioH, 1.3);
+      l[campo] += (d.alvo - base[campo]) * p;
     }
     out.push(l);
   }
@@ -179,6 +205,9 @@ const HISTORICO: Alerta[] = [
   { escada_id: "ECR-REP-02", sinal: "temperatura", valor: 72, limite: 70, nivel: "amarelo", status: "confirmado", aberto_em: "2026-09-15T18:20:00", decidido_por: "Roberto Almeida", decidido_em: "2026-09-15T19:05:00", justificativa: "Aquecimento recorrente. Agendar inspeção do motor fora do pico." },
   { escada_id: "ECR-SPM-01", sinal: "corrente", valor: 22.4, limite: 22, nivel: "amarelo", status: "descartado", aberto_em: "2026-09-28T08:05:00", decidido_por: "Roberto Almeida", decidido_em: "2026-09-28T08:40:00", justificativa: "Evento com lotação atípica (jogo no Morumbi). Sem tendência." },
   { escada_id: "ECR-PIN-01", sinal: "vibracao", valor: 4.7, limite: 4.5, nivel: "vermelho", status: "confirmado", aberto_em: "2026-10-03T06:10:00", decidido_por: "Roberto Almeida", decidido_em: "2026-10-03T06:25:00", justificativa: "Rolamento do motor com ruído. Troca realizada na OS-0907." },
+  { escada_id: "ECR-LUZ-01", sinal: "corrente", valor: 22.6, limite: 22, nivel: "amarelo", status: "descartado", aberto_em: "2026-10-05T17:55:00", decidido_por: "Roberto Almeida", decidido_em: "2026-10-05T18:30:00", justificativa: "Fluxo alto na saída do show na Luz; corrente normalizou às 19h." },
+  { escada_id: "ECR-SPM-02", sinal: "vibracao", valor: 3.1, limite: 3.0, nivel: "amarelo", status: "confirmado", aberto_em: "2026-10-07T08:20:00", decidido_por: "Roberto Almeida", decidido_em: "2026-10-07T09:00:00", justificativa: "Início de tendência de alta. Inspeção de corrente de degraus agendada." },
+  { escada_id: "ECR-OSF-03", sinal: "tensao", valor: 358, limite: 361, nivel: "amarelo", status: "descartado", aberto_em: "2026-10-09T12:15:00", decidido_por: "Roberto Almeida", decidido_em: "2026-10-09T12:40:00", justificativa: "Queda de tensão da concessionária na região; afetou a estação inteira." },
 ].map((a) => ({ ...a, alerta_id: novoIdAlerta() }) as Alerta);
 export const IDS_HISTORICO = new Set(HISTORICO.map((a) => a.alerta_id));
 

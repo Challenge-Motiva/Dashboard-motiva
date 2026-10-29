@@ -1,18 +1,25 @@
 import { SignalChart } from "../components/SignalChart";
+import { AcoesAtendimento, AtendimentoTag } from "../components/Atendimento";
 import { StatusBadge, StatusIcon } from "../components/Status";
 import { LIMITES, LIMITE_POR_SINAL } from "../data/limites";
-import { DIAGNOSTICOS, ESCADA_POR_ID, LEITURAS, ORDENS } from "../data/mock";
+import { DIAGNOSTICOS, EQUIPES, ESCADA_POR_ID, LEITURAS, ORDENS } from "../data/mock";
 import { data, dataHora, haQuanto, num, rotuloGrupo } from "../lib/formato";
 import { avaliar, motivo, textoViolacao } from "../lib/regras";
 import { useStore } from "../lib/store";
+import { horaTurno } from "../lib/turno";
 
 export function Escada({ id }: { id: string }) {
-  const { alertas } = useStore();
+  const { alertas, atendimentos } = useStore();
+  const at = atendimentos[id];
+  const equipe = at && EQUIPES.find((q) => q.equipe_id === at.equipe_id);
   const e = ESCADA_POR_ID[id];
   if (!e) {
     return (
       <div className="panel empty">
-        Escada {id} não encontrada. <a href="#/">Voltar à frota</a>
+        <p>Escada {id} não encontrada.</p>
+        <a className="btn" href="#/">
+          ← Voltar à frota
+        </a>
       </div>
     );
   }
@@ -24,8 +31,16 @@ export function Escada({ id }: { id: string }) {
 
   return (
     <>
-      <nav className="crumbs">
-        <a href="#/">Frota</a> / <span>{e.estacao}</span> / <span className="mono">{e.escada_id}</span>
+      <nav className="back-bar" aria-label="Navegação">
+        <a className="btn-secondary" href="#/">
+          ← Voltar à frota
+        </a>
+        <a className="btn-ghost" href={`#/alertas?escada=${id}`}>
+          Alertas desta escada
+        </a>
+        <a className="btn-ghost" href="#/plano">
+          Plano do turno
+        </a>
       </nav>
 
       <header className="page-head">
@@ -80,6 +95,23 @@ export function Escada({ id }: { id: string }) {
           )}
         </div>
       </section>
+
+      {at && equipe && (
+        <section className={`panel at-panel at-panel-${at.fase}`} aria-live="polite">
+          <div className="panel-head">
+            <h2>Atendimento</h2>
+            <AtendimentoTag at={at} />
+          </div>
+          <p className="small">
+            {equipe.nome} ({equipe.tecnicos.join(", ")}) · chegada prevista {horaTurno(at.parada.chegada)}, término {horaTurno(at.parada.saida)} ·{" "}
+            <a href="#/plano">ver a ordem no plano do turno</a>
+          </p>
+          <AcoesAtendimento at={at} />
+          {at.fase === "concluida" && (
+            <p className="muted small">O status do sensor acima só muda com as próximas leituras; use os gráficos abaixo para conferir se os sinais voltaram à faixa normal.</p>
+          )}
+        </section>
+      )}
 
       <section className="panel">
         <div className="panel-head">
@@ -159,7 +191,9 @@ export function Escada({ id }: { id: string }) {
                       <td className="muted small">{dataHora(a.aberto_em)}</td>
                       <td className="small">
                         {a.status === "aberto" ? (
-                          <a href={`#/alertas?escada=${id}`}>Aguardando gestor</a>
+                          <a className="btn-secondary small" href={`#/alertas?escada=${id}`}>
+                            Avaliar agora
+                          </a>
                         ) : (
                           <span title={a.justificativa ?? ""}>
                             {a.status === "confirmado" ? "Confirmado" : "Descartado"} por {a.decidido_por}

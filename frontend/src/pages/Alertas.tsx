@@ -4,6 +4,7 @@ import { LIMITE_POR_SINAL } from "../data/limites";
 import { ESCADA_POR_ID, IDS_HISTORICO } from "../data/mock";
 import type { Alerta } from "../data/types";
 import { dataHora, haQuanto, num, rotuloGrupo } from "../lib/formato";
+import { AtendimentoTag } from "../components/Atendimento";
 import { GESTOR, useStore } from "../lib/store";
 
 const MIN_JUSTIFICATIVA = 10;
@@ -36,7 +37,14 @@ export function Alertas({ escadaFiltro }: { escadaFiltro?: string }) {
 
       {escadaFiltro && (
         <div className="filter-chip">
-          Mostrando só <span className="mono">{escadaFiltro}</span> · <a href="#/alertas">ver todos</a>
+          Mostrando só
+          <a className="chip-x" href="#/alertas" aria-label={`Remover filtro ${escadaFiltro}`}>
+            <span className="mono">{escadaFiltro}</span>
+            <span aria-hidden="true">×</span>
+          </a>
+          <a className="btn-secondary small" href="#/alertas">
+            Ver todos os alertas
+          </a>
         </div>
       )}
 
@@ -56,7 +64,12 @@ export function Alertas({ escadaFiltro }: { escadaFiltro?: string }) {
           ))}
           {!abertos.length && (
             <div className="panel empty">
-              Fila vazia. {decididos.length > 0 && <a href="#/plano">Ver o plano do turno</a>}
+              <p>Fila vazia.</p>
+              {decididos.length > 0 && (
+                <a className="btn" href="#/plano">
+                  Ver o plano do turno →
+                </a>
+              )}
             </div>
           )}
         </section>
@@ -89,7 +102,8 @@ export function Alertas({ escadaFiltro }: { escadaFiltro?: string }) {
 }
 
 function CartaoAlerta({ alerta: a, posicao }: { alerta: Alerta; posicao: number }) {
-  const { decidir } = useStore();
+  const { decidir, atendimentos } = useStore();
+  const at = atendimentos[a.escada_id];
   const [acao, setAcao] = useState<null | "confirmado" | "descartado">(null);
   const [texto, setTexto] = useState("");
   const e = ESCADA_POR_ID[a.escada_id];
@@ -106,13 +120,20 @@ function CartaoAlerta({ alerta: a, posicao }: { alerta: Alerta; posicao: number 
           <StatusIcon nivel={a.nivel} size={18} />
           <strong>{a.nivel === "vermelho" ? "Intervenção recomendada" : "Atenção"}</strong>
           <span className="mono muted">{a.alerta_id}</span>
-          <a href={`#/escada/${e.escada_id}`} className="mono strong">
+          <a href={`#/escada/${e.escada_id}`} className="id-btn">
             {e.escada_id}
           </a>
           <span className="muted small">
             {e.estacao} · {rotuloGrupo(e.grupo)}
           </span>
+          {at && <AtendimentoTag at={at} />}
         </div>
+        {at && at.fase !== "reprovada" && (
+          <p className="at-warn small">
+            Esta escada já está com uma equipe ({at.fase === "acionada" ? "em atendimento" : at.fase === "concluida" ? "reparo aguardando validação" : "reparo validado"}). Confirmar este alerta não gera um
+            novo despacho; <a href={`#/escada/${e.escada_id}`}>veja o atendimento</a> antes de decidir.
+          </p>
+        )}
         <div className="evidence">
           <div>
             <span className="ev-label">Sinal</span>
@@ -194,8 +215,9 @@ function CartaoAlerta({ alerta: a, posicao }: { alerta: Alerta; posicao: number 
 }
 
 function LinhaDecidida({ a }: { a: Alerta }) {
-  const { desfazer } = useStore();
+  const { desfazer, atendimentos } = useStore();
   const e = ESCADA_POR_ID[a.escada_id];
+  const at = atendimentos[a.escada_id];
   const l = LIMITE_POR_SINAL[a.sinal];
   const historico = IDS_HISTORICO.has(a.alerta_id);
   return (
@@ -204,9 +226,14 @@ function LinhaDecidida({ a }: { a: Alerta }) {
         <StatusIcon nivel={a.nivel} size={12} /> {a.alerta_id}
       </td>
       <td>
-        <a href={`#/escada/${e.escada_id}`} className="mono">
+        <a href={`#/escada/${e.escada_id}`} className="id-btn">
           {e.escada_id}
         </a>
+        {at && (
+          <div>
+            <AtendimentoTag at={at} />
+          </div>
+        )}
       </td>
       <td>
         {l.rotulo}{" "}
